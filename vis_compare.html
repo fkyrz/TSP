@@ -124,7 +124,7 @@
 
             // ファイル読み込みが完了した後に、合計距離を計算して表示
             let {totalLength1, totalLength2} = calculateTotalLength();
-            document.getElementById('sumDistance').innerHTML = `Score(挿入法) : ${totalLength1}, Score(クラスカル法) : ${totalLength2}`;
+            document.getElementById('sumDistance').innerHTML = `Score(挿入法) : ${totalLength1.toFixed(3)}, 　　　　　<font color="red">Score(クラスカル法) : ${totalLength2.toFixed(3)}</font>`;
         };
 
         reader.readAsText(file);

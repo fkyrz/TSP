@@ -1,6 +1,87 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+struct xorshift128{
+    const unsigned int ini_x = 123456789, ini_y = 362436069, ini_z = 521288629, ini_w = 88675123;
+    unsigned int x, y, z, w;
+    
+    xorshift128() {}
+
+    // シードによってx,y,z,wを初期化 ... initialize x,y,z,w by seed
+    void set_seed(unsigned int seed){
+        x = ini_x, y = ini_y, z = ini_z, w = ini_w ^ seed;
+    }
+
+    unsigned int randint(){
+        unsigned int t = x ^ (x << 11);
+        x = y;
+        y = z;
+        z = w;
+        return w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
+    }
+
+    // [0,r)の範囲の整数で乱数発生 ... generate random integer in [0,r)
+    unsigned int randint(unsigned int r){
+        assert(r != 0);
+        return randint() % r;
+    }
+
+    // [l,r)の範囲の整数で乱数発生 ... generate random integer in [l,r)
+    unsigned int randint(unsigned int l, unsigned int r){
+        assert(r > l);
+        return l + randint(r-l);
+    }
+
+    // 長さnの順列をランダムに生成し、その前k個分を出力する ... generate a random permutation of size n, and return the first k
+    vector<int> randperm(int n, int k){
+        assert(k >= 0 && k <= n);
+        vector<int> ret(n);
+        for(int i = 0; i < n; i++){
+            ret[i] = i;
+        }
+        for(int i = 0; i < k; i++){
+            swap(ret[i], ret[randint(i, n)]);
+        }
+        return vector<int>(ret.begin(), ret.begin() + k);
+    }
+
+    // [0,1]の範囲の実数で乱数発生 ... generate random real number in [0,1]
+    double uniform(){
+        return double(randint()) * 2.3283064370807974e-10;
+    }
+
+    // [0,r]の範囲の実数で乱数発生 ... generate random real number in [0,r]
+    double uniform(double r){
+        assert(r >= 0.0);
+        return uniform() * r;
+    }
+
+    // [l,r]の範囲の実数で乱数発生 ... generate random real number in [l,r]
+    double uniform(double l, double r){
+        assert(r >= l);
+        return l + uniform(r - l);
+    }
+};
+
+xorshift128 Random;
+
+const int64_t CYCLES_PER_SEC = 2800000000;
+
+struct Timer {
+	int64_t start;
+	Timer() { reset(); }
+	void reset() { start = getCycle(); }
+	void plus(double a) { start -= (a * CYCLES_PER_SEC); }
+	inline double get() { return (double)(getCycle() - start) / CYCLES_PER_SEC; }
+	inline int64_t getCycle() {
+		uint32_t low, high;
+		__asm__ volatile ("rdtsc" : "=a" (low), "=d" (high));
+		return ((int64_t)low) | ((int64_t)high << 32);
+	}
+};
+
+Timer timer;
+
 // UnionFind  ex.)UnionFind uf(N);  という風に定義する
 // coding: https://youtu.be/TdR816rqc3s?t=726
 // comment: https://youtu.be/TdR816rqc3s?t=6822
@@ -117,6 +198,23 @@ struct TSP{
         return;
     }
 
+    bool twoOpt(){
+        int s1 = Random.uniform(N);
+        int s2 = Random.uniform(N);
+        if(s1 == s2) return false;
+        if(path[s1] == s2) return false;
+        if(path[s2] == s1) return false;
+        int t1 = path[s1];
+        int t2 = path[s2];
+        double nowDistance = distance(s1, t1) + distance(s2, t2);
+        double newDistance = distance(s1, t2) + distance(s2, t1);
+        if(newDistance < nowDistance){
+            path[s1] = t2;
+            path[s2] = t1;
+        }
+        return true;
+    }
+
     bool check(){
         set<int> st;
         for(int i = 0; i < N; i++){
@@ -150,6 +248,14 @@ struct TSP{
 };
 
 int main(){
+    ios::sync_with_stdio(0);
+	cin.tie(0);
+	timer.reset();
+	double TIMELIMIT = 2.0;
+	random_device rnd;     // 非決定的な乱数生成器
+	unsigned long long sd = (unsigned long long)rnd(); 
+	Random.set_seed(sd);
+
     cin >> N;
     places.resize(N);
     for(int i = 0; i < N; i++){
@@ -161,6 +267,10 @@ int main(){
     tsp1.insertion();
     tsp2.kraskal();
 
+    // while(timer.get() < TIMELIMIT){
+    //     tsp1.twoOpt();
+    //     tsp2.twoOpt();
+    // }
     inOutput();
     tsp1.output();
     tsp2.output();
