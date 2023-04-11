@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>座標と線の描画</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <input type="file" id="file-input"><hr>
+  <div id="sumDistance"></div>
+  <canvas id="canvas" width="800" height="600"></canvas><br>
+  <script>
+    let coordinates = [];
+    let connections = [];
+    let scale = 1;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 座標を描画
+      coordinates.forEach(coordinate => {
+        ctx.beginPath();
+        ctx.arc(coordinate.x * scale, coordinate.y * scale, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'black';
+        ctx.fill();
+      });
+
+      // 線を描画
+      connections.forEach(connection => {
+        const start = coordinates[connection[0]];
+        const end = coordinates[connection[1]];
+        
+        ctx.beginPath();
+        ctx.moveTo(start.x * scale, start.y * scale);
+        ctx.lineTo(end.x * scale, end.y * scale);
+        ctx.stroke();
+      });
+    }
+
+    function calculateTotalLength() {
+        let totalLength = 0;
+
+        connections.forEach(connection => {
+            const start = coordinates[connection[0]];
+            const end = coordinates[connection[1]];
+
+
+            const deltaX = start.x - end.x;
+            const deltaY = start.y - end.y;
+
+            totalLength += Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        });
+
+        return totalLength;
+    }
+
+
+    document.getElementById('file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            const lines = event.target.result.split('\n');
+            const n = parseInt(lines[0]);
+
+            coordinates = lines.slice(1, n + 1).map(line => {
+            const [x, y] = line.split(' ').map(Number);
+            return { x, y };
+            });
+
+            connections = lines.slice(n + 1, 2 * n + 1).map(line => {
+            const [a, b] = line.split(' ').map(Number);
+            return [a - 1, b - 1];
+            });
+
+            draw();
+
+            // ファイル読み込みが完了した後に、合計距離を計算して表示
+            console.log(calculateTotalLength());
+            document.getElementById('sumDistance').innerHTML = `Score : ${calculateTotalLength()}`;
+        };
+
+        reader.readAsText(file);
+    });
+
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const scaleFactor = 1.1;
+      scale *= e.deltaY < 0 ? scaleFactor : 1 / scaleFactor;
+      draw();
+    });
+  </script>
+</body>
+</html>
