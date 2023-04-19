@@ -198,6 +198,22 @@ struct TSP{
         return;
     }
 
+    void intervalReversal(int s, int t){
+        vector<int> prevPath;
+        int now = s;
+        while(now != t){
+            now = path[now];
+            prevPath.push_back(now);
+        }
+        reverse(prevPath.begin(), prevPath.end());
+
+        for(int i = 0; i < (int)prevPath.size() - 1; ++i){
+            path[prevPath[i]] = prevPath[i - 1];
+        }
+
+        return;
+    }
+
     bool twoOpt(){
         int s1 = Random.uniform(N);
         int s2 = Random.uniform(N);
@@ -209,8 +225,9 @@ struct TSP{
         double nowDistance = distance(s1, t1) + distance(s2, t2);
         double newDistance = distance(s1, t2) + distance(s2, t1);
         if(newDistance < nowDistance){
-            path[s1] = t2;
-            path[s2] = t1;
+            intervalReversal(g1, s2);
+            path[s1] = s2;
+            path[g1] = g2;
         }
         return true;
     }
@@ -267,10 +284,10 @@ int main(){
     tsp1.insertion();
     tsp2.kraskal();
 
-    // while(timer.get() < TIMELIMIT){
-    //     tsp1.twoOpt();
-    //     tsp2.twoOpt();
-    // }
+    while(timer.get() < TIMELIMIT){
+        tsp1.twoOpt();
+        tsp2.twoOpt();
+    }
     inOutput();
     tsp1.output();
     tsp2.output();
